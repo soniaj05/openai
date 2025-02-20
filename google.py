@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF for PDF text extraction
+import fitz  
 import os
 from sqlalchemy import create_engine, Column, Integer, Text
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Securely get database credentials
-DB_PASSWORD = quote_plus(os.getenv("DB_PASSWORD", "$onia@24"))  # Use your actual password
+DB_PASSWORD = quote_plus(os.getenv("DB_PASSWORD", "$onia@24")) 
 DATABASE_URL = f"mysql+pymysql://root:{DB_PASSWORD}@localhost/testdb"
 
 # SQLAlchemy setup
@@ -25,7 +25,7 @@ Base = declarative_base()
 class Document(Base):
     __tablename__ = "documents"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    content = Column(LONGTEXT)  # Stores large text data
+    content = Column(LONGTEXT)
 
 # Create the table
 Base.metadata.create_all(engine)
@@ -46,8 +46,8 @@ def store_pdf_text(text):
     session.commit()
     session.close()
 
-# Process multiple PDFs and store text in MySQL
-pdf_files = ["model.pdf"]  # Add more PDFs if needed
+
+pdf_files = ["model.pdf"]  
 
 for pdf in pdf_files:
     text = extract_text_from_pdf(pdf)
@@ -57,7 +57,7 @@ for pdf in pdf_files:
 db = SQLDatabase.from_uri(DATABASE_URL)
 
 # Configure Google Gemini
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCxmJd8LxlTm53pSHCgkQI8KYDE9xDhBqw")  # Use your actual API key
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBMe-rq71SGRjBFZj88hBkP3nrqwCl-HNI") 
 llm = GoogleGenerativeAI(model="gemini-pro", google_api_key=GEMINI_API_KEY)
 
 # Define a LangChain prompt template
@@ -65,9 +65,6 @@ prompt = PromptTemplate(
     input_variables=["document_text", "question"],
     template="Answer the following question based on these documents:\n\n{document_text}\n\nQuestion: {question}"
 )
-
-# Updated LangChain pipeline
-qa_chain = prompt | llm  # ✅ New method replacing deprecated LLMChain
 
 # Retrieve stored text from MySQL
 def retrieve_document_text():
@@ -81,7 +78,8 @@ def ask_gemini(question):
     if not document_text:
         return "No document found in the database."
     
-    response = qa_chain.invoke({"document_text": document_text, "question": question})
+    formatted_prompt = prompt.format(document_text=document_text, question=question)
+    response = llm.invoke(formatted_prompt)
     return response
 
 
